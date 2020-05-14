@@ -9,7 +9,7 @@ run_with_ngrok(app)
 logging.basicConfig(level=logging.INFO)
 sessionStorage = {}
 
-list_of_films = ['аниме', 'биография', 'боевик', 'вестерн', 'военный',
+list_of_genre = ['аниме', 'биография', 'боевик', 'вестерн', 'военный',
                  'детектив', 'детский', 'документальный', 'драма',
                  'исторический', 'кинокомикс', 'комедия', 'концерт',
                  'криминал', 'мелодрама', 'мистика', 'мультфильм',
@@ -50,6 +50,10 @@ def main():
 
 def handle_dialog(req, res):
     user_id = req['session']['user_id']
+    if req['request']['original_utterance'].lower() == 'помощь':
+        res['response']['text'] = 'Это приложение называется кинолюбитель.' \
+                                  ' Оно поможет тебе выбрать кино по вкусу, анализируя Ваши ответы'
+        return
 
     if req['session']['new']:
         sessionStorage[user_id] = {'company': None,
@@ -63,37 +67,52 @@ def handle_dialog(req, res):
                                        'hide': True}]
         return
 
-    # Блок определяющий компанию пользователя
+    # Блок определяющий Компанию пользователя. Нужно еще доработать
     if sessionStorage[user_id]['company'] is None:
         res['response']['text'] = 'Скажите, пожалуйста, вы будете смотреть фильм один, c семьей или с компанией друзей'
         res['response']['buttons'] = [{'title': elem,
-                                       'hide': True} for elem in ['С друзьями', 'Один', 'С семьёй', 'Помощь']]
+                                       'hide': True} for elem in list_of_all_company]
         sessionStorage[user_id]['company'] = True
         return
 
-    if req['request']['original_utterance'].lower() in 'с друзьями' and sessionStorage[user_id]['company']:
-        sessionStorage[user_id]['company'] = 'с друзьями'
-        res['response']['text'] = 'Это отлично! Буду подбирать кино для компании друзей'
+    if sessionStorage[user_id]['company'] is True:
+        for company in list_of_big_company:
+            if company in req['request']['original_utterance']:
+                sessionStorage[user_id]['company'] = company
+                res['response']['text'] = 'Это отлично! Буду подбирать кино для Вашей хорошей компании'
+                break
+        for company in list_of_alone:
+            if company in req['request']['original_utterance']:
+                sessionStorage[user_id]['company'] = company
+                res['response']['text'] = 'Это отлично! Буду подбирать кино для Вас'
+                break
+
+        # start genre
+        if type(sessionStorage[user_id]['company']) is str:
+            if sessionStorage[user_id]['company'].lower() in list_of_big_company:
+                res['response']['text'] = 'Какой жанр наиболее предпочтённый в вашей компании?'
+            if sessionStorage[user_id]['company'].lower() in list_of_alone:
+                res['response']['text'] = 'Какой жанр наиболее Вам предпочтённый?'
+            res['response']['buttons'] = [{'title': elem,
+                                           'hide': True} for elem in list_of_genre]
+            sessionStorage[user_id]['genre'] = True
+        # end
+
+        if sessionStorage[user_id]['company'] is True:
+            res['response']['text'] = 'Прошу прощения, но я не поняла, что вы сказали. Повторите ещё раз.'
         return
-
-    if req['request']['original_utterance'].lower() == 'помощь':
-        res['response']['text'] = 'Это приложение называется кинолюбитель.' \
-                                  ' Оно поможет тебе выбрать кино по вкусу, анализируя Ваши ответы'
-        return
-
-
 
     # Блок определяющий предпочтённый ЖАНР пользователя / пользователей
-    if sessionStorage[user_id]['company'].lower() in list_of_all_company and sessionStorage[user_id]['genre'] is None:
-        if sessionStorage[user_id]['company'].lower() in list_of_big_company:
-            res['response']['text'] = 'Какой жанр наиболее предпочтённый в вашей компании?'
-        if sessionStorage[user_id]['company'].lower() in list_of_big_company:
-            res['response']['text'] = 'Какой жанр наиболее Вам предпочтённый?'
-        res['response']['buttons'] = [{'title': elem,
-                                       'hide': True} for elem in list_of_films]
-        sessionStorage[user_id]['genre'] = True
+
+    if sessionStorage[user_id]['genre'] is True:
+        for genre in list_of_genre:
+            if genre in req['request']['original_utterance'].lower():
+                sessionStorage[user_id]['genre'] = genre
+                res['response']['text'] = 'Ok'
+                break
+        if req['request']['original_utterance'] is True:
+            res['response']['text'] = 'Извините, я не расслышала. Повторите, пожалуйста, предпочитаемый жанр.'
         return
-    if sessionStorage[user_id]['genre'] is True
 
 
 if __name__ == '__main__':
