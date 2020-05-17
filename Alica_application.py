@@ -49,7 +49,8 @@ def handle_dialog(req, res):
                                    'genre': None,
                                    'country': None}
 
-        res['response']['buttons'] = [{'title': 'Помощь', 'hide': True}, {'title': 'Как это работает?', 'hide': True}]
+        res['response']['buttons'] = [{'title': 'Помощь',
+                                       'hide': True}]
         res['response']['text'] = 'Привет! Это приложение называется кинолюбитель.' \
                                   ' Оно поможет тебе выбрать кино по вкусу. \n'
 
@@ -75,8 +76,6 @@ def handle_dialog(req, res):
         if sessionStorage[user_id]['company'] is True:
             res['response']['buttons'] = [{'title': elem,
                                            'hide': True} for elem in list_of_all_age]
-            res['response']['buttons'].append({'title': 'Помощь',
-                                               'hide': True}, {'title': 'Как это работает?', 'hide': True})
             res['response']['text'] = 'Извините, я не расслышала. Повторите, пожалуйста!'
             return
 
@@ -86,17 +85,22 @@ def handle_dialog(req, res):
             res['response']['buttons'] = [{'title': elem,
                                            'hide': True} for elem in list_of_genre]
             res['response']['buttons'].append({'title': 'Помощь',
-                                               'hide': True}, {'title': 'Как это работает?', 'hide': True})
+                                               'hide': True},
+                                              {'title': 'Как это работает?',
+                                               'hide': True})
+            sessionStorage[user_id]['genre'] = True
         # end
+
         if sessionStorage[user_id]['company'] is True:
             res['response']['text'] = 'Прошу прощения, но я не поняла, что вы сказали. Повторите ещё раз.'
             res['response']['buttons'] = [{'title': elem,
                                            'hide': True} for elem in list_of_genre]
             res['response']['buttons'].append({'title': 'Помощь',
-                                               'hide': True},
-                                              {'title': 'Как это работает?',
+                                               'hide': True})
+            res['response']['buttons'].append({'title': 'Как это работает?',
                                                'hide': True})
         return
+
     # Блок определяющий предпочтённый ЖАНР пользователя / пользователей
     if sessionStorage[user_id]['genre'] is True:
         for el in ['какие бывают жанры', 'помощь']:
